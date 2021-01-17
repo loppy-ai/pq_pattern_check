@@ -39,23 +39,29 @@ class DamageInfo:
         for i in range(5):
             ret += self.getNumOfElimination(i+1)
         return ret
-    
+
     # 全おじゃまぷよ消去数取得
     def getAllOjamaPuyoNumOfElimination(self):
         return self.getNumOfElimination(6) + self.getNumOfElimination(7)
 
+    # ハート消去数取得
+    def getHeartNumOfElimination(self):
+        return self.getNumOfElimination(8)
+
     # チャンスぷよを生成するかどうか
     def canMakeChancePuyo(self):
         ret = False
-        if self.chain_count >= 6:
-            ret = True
-        else:
-            for i in range(self.chain_count):
-                if sum(self.chain_result[i][1:8]) >= 16:
-                    ret = True
-                    break
+        if self.max_connection != 3:
+            # 特別ルール時は作らない
+            if self.chain_count >= 6:
+                ret = True
+            else:
+                for i in range(self.chain_count):
+                    if sum(self.chain_result[i][1:8]) >= 16:
+                        ret = True
+                        break
         return ret
-    
+
     # 色別倍率
     def getMagnificationByColor(self, colorNumber):
         all_chain_magnification = 0
@@ -75,3 +81,7 @@ class DamageInfo:
                     all_chain_magnification += chain_magnification * sum(self.chain_result[i][10:15]) + (3 * self.chain_result[i][9])
         return all_chain_magnification
 
+    # ハート倍率
+    def getMagnificationHeart(self):
+        # TODO:全消ししたら+1倍
+        return self.getHeartNumOfElimination()*(1+0.05*self.chain_count)

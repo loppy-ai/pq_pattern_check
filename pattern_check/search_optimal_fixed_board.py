@@ -7,7 +7,7 @@ import psycopg2
 import time
 from chain_info import ChainInfo
 from damage_info import DamageInfo
-from result_info import ResultInfo
+from display_chain_result import display_settings, display_chain_result
 
 user = 'postgres'
 dbname = 'pqdb'
@@ -16,11 +16,11 @@ conn = psycopg2.connect(" user=" + user +" dbname=" + dbname + " password=" + pa
 cur = conn.cursor()
 
 
-def main():
+def search_optimal_fixed_board():
     start_time = time.time()
     # arg = ('pq.py', '5', '1', '10', '6.5', '7', '3')
-    # 第1引数 : Nextの色
-    # 第2引数 : 盤面パターン
+    # 第1引数 : Nextの色(next_color)
+    # 第2引数 : 盤面パターン(board_pattern)
     # 第3引数 : なぞり消し数(max_trace)
     # 第4引数 : 同時消し係数(elimination_coefficient)
     # 第5引数 : 連鎖係数(chain_coefficient)
@@ -29,21 +29,23 @@ def main():
     if not isArgCorrect(arg):
         sys.exit()
 
-    color = int(arg[1])
-    trace_pattern_size = getTracePatternSize(int(arg[3]))
+    next_color = int(arg[1])
+    board_pattern = int(arg[2])
+    max_trace = int(arg[3])
     elimination_coefficient = int(arg[4])
     chain_coefficient = int(arg[5])
     max_connection = int(arg[6])
+    
+    trace_pattern_size = getTracePatternSize(max_trace)
     now_max_magnification = 0
-    now_max_pattern = []
     is_debug_mode = False
     frequency = 10000
     count = 0
 
     # なぞり消しパターン数だけループ
+    print("-------------------処理開始時間-------------------")
     for pattern in range(-(-trace_pattern_size // frequency)):  # 切り上げ
-        print(pattern * frequency)
-        print(str(datetime.datetime.now()))
+        print(str(pattern * frequency).rjust(9) + "～" + str((pattern+1)*frequency).rjust(9) + " : " + str(datetime.datetime.now()))
         cur = getTracePattern(pattern*frequency, frequency, trace_pattern_size)
         for row in cur:
             count += 1
@@ -57,26 +59,35 @@ def main():
             chain_result = chain_info.getChainResult()
             # ダメージ計算インスタンスの生成
             damage_info = DamageInfo(chain_result, elimination_coefficient, chain_coefficient, max_connection)
-            # print("紫の消去数 : " + str(damage_info.getNumOfElimination(5)))
-            # print("全ぷよの消去数 : " + str(damage_info.getAllColorPuyoNumOfElimination()))
-            # print("お邪魔の消去数 : " + str(damage_info.getAllOjamaPuyoNumOfElimination()))
-            # print("チャンスぷよ生成 : " + str(damage_info.canMakeChancePuyo()))
-            # print("紫の倍率 : " + str(damage_info.getMagnificationByColor(5)))
-            # print("ワイルドの倍率 : " + str(damage_info.getMagnificationByColor(9)))
-            
-            # 最大だったら更新
-            magnification = damage_info.getMagnificationByColor(color)
+
+            # 最適解を見つけるための条件設定
+                # print("紫の消去数 : " + str(damage_info.getNumOfElimination(5)))
+                # print("全ぷよの消去数 : " + str(damage_info.getAllColorPuyoNumOfElimination()))
+                # print("お邪魔の消去数 : " + str(damage_info.getAllOjamaPuyoNumOfElimination()))
+                # print("チャンスぷよ生成 : " + str(damage_info.canMakeChancePuyo()))
+                # print("紫の倍率 : " + str(damage_info.getMagnificationByColor(5)))
+                # print("ワイルドの倍率 : " + str(damage_info.getMagnificationByColor(9)))
+            # ある色の最大倍率を求める
+            magnification = damage_info.getMagnificationByColor(next_color)
             if now_max_magnification < magnification:
                 now_max_magnification = magnification
                 now_max_pattern = trace_pattern
 
+            del chain_info
+            del damage_info
+
     elapsed_time = time.time() - start_time
-    print("処理にかかった時間 : " + str(elapsed_time))
-    print("count : " + str(count))
+    print("")
+    print("-------------------合計処理時間-------------------")
+    print(datetime.timedelta(seconds=elapsed_time))
+    print("")
 
     # 結果表示
-    print("倍率 : " + str(now_max_magnification))
-    print("pattern :" + str(now_max_pattern))
+    puyo_next = initNext(int(arg[1]))
+    puyo_board = initBoard(int(arg[2]))
+    is_process_print = False
+    display_settings(next_color, board_pattern, max_trace, elimination_coefficient, chain_coefficient, max_connection, now_max_pattern)
+    display_chain_result(puyo_next, puyo_board, max_trace, elimination_coefficient, chain_coefficient, max_connection, now_max_pattern, is_process_print)
 
     # 終了処理
     cur.close()
@@ -204,4 +215,4 @@ def getTracePattern(pattern, frequency, trace_pattern_size):
 
 
 if __name__ == '__main__':
-    main()
+    search_optimal_fixed_board()

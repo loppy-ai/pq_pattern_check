@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import copy
 
 class ChainInfo:
     # 入力：ネクスト・盤面・最大結合数・デバッグモードかどうか
@@ -17,6 +18,9 @@ class ChainInfo:
         return self.chain_result
 
     def _chain(self):
+        if self.is_debug_mode:
+            self._debug('defaultBoard', self.puyo_next)
+            self._debugTracePattern('tracePattern')
         # 盤面に対してなぞりパターンを適用
         self._applyTracePattern()
         if self.is_debug_mode:
@@ -41,15 +45,19 @@ class ChainInfo:
                 # 次の連鎖
                 chain_count += 1 
                 self.chain_info[0] = chain_count
+                if self.is_debug_mode:
+                    self._debug('elimination', self.puyo_next)
+                    self._debugChain()
                 self._dropBoard()
                 if self.is_debug_mode:
-                    self._debugChain()
-                    self._debug('chaining', self.puyo_next)
+                    self._debug('dropBoard', self.puyo_next)
                 all_chain_info.append(self.chain_info)
             # 消えなかった
             else:
                 # nextを落とす
                 next_drop_flag = self._dropNext()
+                if self.is_debug_mode:
+                    self._debug('dropNext', self.puyo_next)
                 if not next_drop_flag:
                     is_chaining = False
         return all_chain_info
@@ -198,15 +206,38 @@ class ChainInfo:
 
 
     def _debug(self, text, puyo_next='[         none         ]',):
+        board = copy.deepcopy(self.puyo_board)
+        next = copy.deepcopy(puyo_next)
+        if type(next) is not str:
+            for i in range(8):
+                if next[i] == 9:
+                    next[i] = 0
+        for i in range(48):
+            if board[i] == 9:
+                board[i] = 0
         print(text)
-        print(puyo_next)
+        print(next)
         print('------------------------')
-        print(self.puyo_board[0:8])
-        print(self.puyo_board[8:16])
-        print(self.puyo_board[16:24])
-        print(self.puyo_board[24:32])
-        print(self.puyo_board[32:40])
-        print(self.puyo_board[40:48])
+        print(board[0:8])
+        print(board[8:16])
+        print(board[16:24])
+        print(board[24:32])
+        print(board[32:40])
+        print(board[40:48])
+        print(' ')
+
+
+    def _debugTracePattern(self, text, next='[         none         ]',):
+        board = [int(i) for i in self.trace_pattern]
+        print(text)
+        print(next)
+        print('------------------------')
+        print(board[0:8])
+        print(board[8:16])
+        print(board[16:24])
+        print(board[24:32])
+        print(board[32:40])
+        print(board[40:48])
         print(' ')
 
 
