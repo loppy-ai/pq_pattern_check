@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import sys
+sys.dont_write_bytecode = True
 import datetime
 import psycopg2
 import time
@@ -51,8 +52,6 @@ def search_optimal_fixed_board():
         for row in cur:
             count += 1
             trace_pattern = list(list(row)[0])
-            trace_pattern = np.array(np.array(row)[0])
-            print(trace_pattern2)
             puyo_next = initNext(int(arg[1]))
             puyo_board = initBoard(int(arg[2]))
             # なぞりパターンと盤面のお邪魔がかぶっていたら次のパターンへ

@@ -37,6 +37,7 @@ def main():
     display_settings(next_color, board_pattern, max_trace, elimination_coefficient, chain_coefficient, max_connection, trace_pattern)
     display_chain_result(puyo_next, puyo_board, max_trace, elimination_coefficient, chain_coefficient, max_connection, pattern, is_process_print)
 
+
 def display_settings(next_color, board_pattern, max_trace, elimination_coefficient, chain_coefficient, max_connection, pattern):
     print("---------------------設定情報---------------------")
     print("ネクストの色       : " + str(next_color))

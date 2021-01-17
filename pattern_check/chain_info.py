@@ -14,8 +14,10 @@ class ChainInfo:
         # 連鎖処理
         self.chain_result = self._chain()
 
+
     def getChainResult(self):
         return self.chain_result
+
 
     def _chain(self):
         if self.is_debug_mode:
@@ -138,10 +140,12 @@ class ChainInfo:
                     if check_board[j] == 1:
                         check_board[j] = 3
 
+
         # 確認用配列が2になっている箇所の盤面を0にする
         for i in range(48):
             if check_board[i] == 2:
                 self.puyo_board[i] = 0
+
 
         # 1:赤 2:青 3:緑 4:黄 5:紫 6:邪 7:固 8:ハート 10:プリズム
         # 邪・固・ハ・プ処理
