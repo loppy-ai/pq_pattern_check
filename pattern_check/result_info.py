@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-class Result:
+class ResultInfo:
 
     def __init__(self):
         print("result_init")

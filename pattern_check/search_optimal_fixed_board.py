@@ -4,8 +4,10 @@
 import sys
 import datetime
 import psycopg2
+import time
 from chain_info import ChainInfo
-from result import Result
+from damage_info import DamageInfo
+from result_info import ResultInfo
 
 user = 'postgres'
 dbname = 'pqdb'
@@ -15,6 +17,7 @@ cur = conn.cursor()
 
 
 def main():
+    start_time = time.time()
     # arg = ('pq.py', '5', '1', '10', '6.5', '7', '3')
     # 第1引数 : Nextの色
     # 第2引数 : 盤面パターン
@@ -26,28 +29,59 @@ def main():
     if not isArgCorrect(arg):
         sys.exit()
 
+    color = int(arg[1])
     trace_pattern_size = getTracePatternSize(int(arg[3]))
     elimination_coefficient = int(arg[4])
-    chain_coefficient_list = getChainCoefficientList(int(arg[5]))
+    chain_coefficient = int(arg[5])
     max_connection = int(arg[6])
-    result = Result()
+    now_max_magnification = 0
+    now_max_pattern = []
     is_debug_mode = False
+    frequency = 10000
+    count = 0
 
     # なぞり消しパターン数だけループ
-    for pattern in range(trace_pattern_size):
-        puyo_next = initNext(int(arg[1]))
-        puyo_board = initBoard(int(arg[2]))
-        if pattern % 100000 == 0:
-            print(pattern)
-            print(str(datetime.datetime.now()))
-        trace_pattern = getTracePattern(pattern)
-        # なぞりパターンと盤面のお邪魔がかぶっていたら次のパターンへ
-            # 今回はりんご盤面なのでお邪魔は存在しない
-        # 連鎖情報オブジェクトの生成
-        chain_info = ChainInfo(puyo_next, puyo_board, trace_pattern, max_connection, is_debug_mode)
-        # ダメージ計算オブジェクトの生成
-        
-    # 結果表示オブジェクトの生成
+    for pattern in range(-(-trace_pattern_size // frequency)):  # 切り上げ
+        print(pattern * frequency)
+        print(str(datetime.datetime.now()))
+        cur = getTracePattern(pattern*frequency, frequency, trace_pattern_size)
+        for row in cur:
+            count += 1
+            trace_pattern = list(list(row)[0])
+            puyo_next = initNext(int(arg[1]))
+            puyo_board = initBoard(int(arg[2]))
+            # なぞりパターンと盤面のお邪魔がかぶっていたら次のパターンへ
+                # 今回はりんご/もあクル盤面なのでお邪魔は存在しない
+            # 連鎖情報インスタンスの生成
+            chain_info = ChainInfo(puyo_next, puyo_board, trace_pattern, max_connection, is_debug_mode)
+            chain_result = chain_info.getChainResult()
+            # ダメージ計算インスタンスの生成
+            damage_info = DamageInfo(chain_result, elimination_coefficient, chain_coefficient, max_connection)
+            # print("紫の消去数 : " + str(damage_info.getNumOfElimination(5)))
+            # print("全ぷよの消去数 : " + str(damage_info.getAllColorPuyoNumOfElimination()))
+            # print("お邪魔の消去数 : " + str(damage_info.getAllOjamaPuyoNumOfElimination()))
+            # print("チャンスぷよ生成 : " + str(damage_info.canMakeChancePuyo()))
+            # print("紫の倍率 : " + str(damage_info.getMagnificationByColor(5)))
+            # print("ワイルドの倍率 : " + str(damage_info.getMagnificationByColor(9)))
+            
+            # 最大だったら更新
+            magnification = damage_info.getMagnificationByColor(color)
+            if now_max_magnification < magnification:
+                now_max_magnification = magnification
+                now_max_pattern = trace_pattern
+
+    elapsed_time = time.time() - start_time
+    print("処理にかかった時間 : " + str(elapsed_time))
+    print("count : " + str(count))
+
+    # 結果表示
+    print("倍率 : " + str(now_max_magnification))
+    print("pattern :" + str(now_max_pattern))
+
+    # 終了処理
+    cur.close()
+    conn.close()
+
 
 def isArgCorrect(arg):
     ret = False
@@ -56,20 +90,25 @@ def isArgCorrect(arg):
     elif not arg[1].isdecimal():
         print("Error : 第1引数(Nextの色)が数値でない")
     elif not ((int(arg[1]) >= 1 and int(arg[1]) <= 5) or (int(arg[1]) == 9)):
-        print("Error : 第1引数は1～5 か 9のみ")
+        print("Error : 第1引数は1～5か9のみ")
     elif not arg[2].isdecimal():
         print("Error : 第2引数(盤面パターン)が数値でない")
     elif not ((int(arg[2]) >= 1 and int(arg[2]) <= 8) or (int(arg[2]) >= 101 and int(arg[2]) <= 116)):
         print("Error : 第2引数は1～8, 101～116のみ")
     elif not arg[3].isdecimal():
-        print("Error : 第3引数(なぞり消し係数)が数値でない")
+        print("Error : 第3引数(なぞり消し数)が数値でない")
     elif not arg[4].isdecimal():
         print("Error : 第4引数(同時消し係数)が数値でない")
     elif not arg[5].isdecimal():
         print("Error : 第5引数(連鎖係数)が数値でない")
+    elif not ((int(arg[5]) >= 4 and int(arg[5]) <= 7) or (int(arg[5]) == 1)):
+        print("Error : 第5引数は1か4～7のみ")
+    elif not arg[6].isdecimal():
+        print("Error : 第6引数(最大結合数)が数値でない")
     else:
         ret = True
     return ret
+
 
 def getTracePatternSize(max_trace):
     # max_traceの数に応じて、なぞりパターン数が決まる
@@ -97,21 +136,10 @@ def getTracePatternSize(max_trace):
         ret = 26702013
     return ret
 
-def getChainCoefficientList(chain_coefficient):
-    if chain_coefficient == 1:
-        ret = [1, 1.4, 1.7, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4]
-    elif chain_coefficient == 4:
-        ret = [1, 2.6, 3.8, 5.0, 5.8, 6.6, 7.4, 8.2, 9.0, 9.8, 10.6, 11.4, 12.2, 13.0, 13.8, 14.6]
-    elif chain_coefficient == 5:
-        ret = [1, 3.0, 4.5, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0]
-    elif chain_coefficient == 6:
-        ret = [1, 3.4, 5.2, 7.0, 8.2, 9.4, 10.6, 11.8, 13.0, 14.2, 15.4, 16.6, 17.8, 19.0, 20.2, 21.4]
-    elif chain_coefficient == 7:
-        ret = [1, 3.8, 5.9, 8.0, 9.4, 10.8, 12.2, 13.6, 15.0, 16.4, 17.8, 19.2, 20.6, 22.0, 23.4, 24.8]
-    return ret
 
 def initNext(next_color_no):
     return [next_color_no] * 8
+
 
 def initBoard(board_pattern_no):
     if board_pattern_no == 1:    # 15連鎖（全消し）
@@ -165,11 +193,14 @@ def initBoard(board_pattern_no):
     return ret
 
 
-def getTracePattern(pattern):
-    # TODO:pattern+1からpattern+10万までを一括で取得するように変更する
-    cur.execute('SELECT board FROM pattern WHERE id = %s', (pattern+1,))
-    trace_pattern = list(list(cur.fetchone())[0])
-    return trace_pattern
+def getTracePattern(pattern, frequency, trace_pattern_size):
+    if (pattern + frequency) > trace_pattern_size:
+        # 余り部分だけを取得
+        cur.execute('SELECT board FROM pattern WHERE id BETWEEN %s AND %s', (pattern+1, trace_pattern_size))
+    else:
+        # pattern+1からpattern+1+frequencyまで(つまりfrequency行)を一括で取得する
+        cur.execute('SELECT board FROM pattern WHERE id BETWEEN %s AND %s', (pattern+1, pattern+frequency))
+    return cur
 
 
 if __name__ == '__main__':

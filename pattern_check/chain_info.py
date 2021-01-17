@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# あるなぞり消しパターンを適用した際の、連鎖終了までの盤面情報
+
 class ChainInfo:
+    # 入力：ネクスト・盤面・最大結合数・デバッグモードかどうか
     def __init__(self, puyo_next, puyo_board, trace_pattern, max_connection, is_debug_mode):
         self.puyo_next = puyo_next
         self.puyo_board = puyo_board
@@ -12,6 +13,8 @@ class ChainInfo:
         # 連鎖処理
         self.chain_result = self._chain()
 
+    def getChainResult(self):
+        return self.chain_result
 
     def _chain(self):
         # 盤面に対してなぞりパターンを適用
