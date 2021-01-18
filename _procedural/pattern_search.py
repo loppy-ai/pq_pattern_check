@@ -7,6 +7,7 @@
 import sys
 import psycopg2
 import datetime
+import time
 
 user = 'postgres'
 dbname = 'pqdb'
@@ -19,14 +20,15 @@ cur = conn.cursor()
 
 # メイン処理
 def main():
+    start_time = time.time()
     arg = sys.argv
     # arg = ('pq.py', '5', '1')
-    max_trace = 10 # 最大なぞり消し
-    elimination_coefficient = 6.5  # 同時消し係数（蒸気すずらん）
-    # chain_coefficient = 7  # 連鎖係数（★7あんどうりんご FP）
-    chain_coefficient = 1  # 連鎖係数（通常）
-    # chain_coefficient_list = [1, 3.8, 5.9, 8, 9.4, 10.8, 12.2, 13.6, 15, 16.4, 17.8, 19.2, 20.6, 22, 23.4, 24.8]  # その時の連鎖係数
-    chain_coefficient_list = [1, 1.4, 1.7, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4]  # その時の連鎖係数
+    max_trace = 5 # 最大なぞり消し
+    elimination_coefficient = 1  # 同時消し係数（蒸気すずらん）
+    chain_coefficient = 7  # 連鎖係数（★7あんどうりんご FP）
+    # chain_coefficient = 1  # 連鎖係数（通常）
+    chain_coefficient_list = [1, 3.8, 5.9, 8, 9.4, 10.8, 12.2, 13.6, 15, 16.4, 17.8, 19.2, 20.6, 22, 23.4, 24.8]  # その時の連鎖係数
+    # chain_coefficient_list = [1, 1.4, 1.7, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4]  # その時の連鎖係数
 
     # 引数チェック
     checkArg(arg)
@@ -92,8 +94,8 @@ def main():
             # 同時に消した数
             all_count = sum(all_chain_info[i][1:8])
             # 連鎖係数 * (1 + (同時に消した数 - 3or4) * 0.15 * 同時消し係数)
-            # magnification = chain_coefficient_list[i] * ( 1 + (all_count - 3) * 0.15 * elimination_coefficient)
-            magnification = chain_coefficient_list[i] * ( 1 + (all_count - 4) * 0.15 * elimination_coefficient)
+            magnification = chain_coefficient_list[i] * ( 1 + (all_count - 3) * 0.15 * elimination_coefficient)
+            # magnification = chain_coefficient_list[i] * ( 1 + (all_count - 4) * 0.15 * elimination_coefficient)
             for j in range(len(color_magnification) - 1):
                 # 連鎖係数 * 分離数 + プリボ
                 color_magnification[j] += magnification * all_chain_info[i][10+j] + (3 * all_chain_info[i][9])
@@ -117,6 +119,9 @@ def main():
                 result[i] = color_magnification[i]
                 result[i+6] = pattern + 1
     
+    elapsed_time = time.time() - start_time
+    print("経過時間 : " + str(elapsed_time))
+
     # 結果出力
     printResult(max_trace, elimination_coefficient, chain_coefficient, arg, result)
     
@@ -348,8 +353,8 @@ def checkConnection(puyo_board, chain_info):
         check_board, count = recursionCheckConnection(i, check_board, puyo_board, count)
         # iのぷよは何個つながっているかが返ってくる
         # 消える数だけ繋がっている場合
-        # if count >= 3:    # りんごだから3 通常なら4
-        if count >= 4:    # りんごだから3 通常なら4
+        if count >= 3:    # りんごだから3 通常なら4
+        # if count >= 4:    # りんごだから3 通常なら4
             # chain_infoに赤/青/緑/黄/紫の情報を格納
             chain_info[puyo_board[i]] += count
             chain_info[9+puyo_board[i]] += 1

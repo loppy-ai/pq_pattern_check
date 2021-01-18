@@ -37,7 +37,7 @@ class ChainInfo:
         all_chain_info = []
         # 連鎖数
         chain_count = 0
-        while (is_chaining):
+        for _ in range(17):
             # 連鎖数, 赤個, 青個, 緑個, 黄個, 紫個, 邪個, 固個, ハ個, プ個, 赤分, 青分, 緑分, 黄分, 紫分
             self.chain_info = [0] * 15
             # 結合チェック
@@ -62,6 +62,8 @@ class ChainInfo:
                     self._debug('dropNext', self.puyo_next)
                 if not next_drop_flag:
                     is_chaining = False
+            if not is_chaining:
+                break
         return all_chain_info
 
 
