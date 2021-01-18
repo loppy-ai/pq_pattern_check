@@ -33,8 +33,8 @@ def search_optimal_fixed_board():
     next_color = int(arg[1])
     board_pattern = int(arg[2])
     max_trace = int(arg[3])
-    elimination_coefficient = int(arg[4])
-    chain_coefficient = int(arg[5])
+    elimination_coefficient = float(arg[4])
+    chain_coefficient = float(arg[5])
     max_connection = int(arg[6])
     
     trace_pattern_size = getTracePatternSize(max_trace)
@@ -84,8 +84,8 @@ def search_optimal_fixed_board():
     print("")
 
     # 結果表示
-    puyo_next = initNext(int(arg[1]))
-    puyo_board = initBoard(int(arg[2]))
+    puyo_next = initNext(next_color)
+    puyo_board = initBoard(board_pattern)
     is_process_print = False
     display_settings(next_color, board_pattern, max_trace, elimination_coefficient, chain_coefficient, max_connection, now_max_pattern)
     display_chain_result(puyo_next, puyo_board, max_trace, elimination_coefficient, chain_coefficient, max_connection, now_max_pattern, is_process_print)
@@ -109,12 +109,6 @@ def isArgCorrect(arg):
         print("Error : 第2引数は1～8, 101～116のみ")
     elif not arg[3].isdecimal():
         print("Error : 第3引数(なぞり消し数)が数値でない")
-    elif not arg[4].isdecimal():
-        print("Error : 第4引数(同時消し係数)が数値でない")
-    elif not arg[5].isdecimal():
-        print("Error : 第5引数(連鎖係数)が数値でない")
-    elif not ((int(arg[5]) >= 4 and int(arg[5]) <= 7) or (int(arg[5]) == 1)):
-        print("Error : 第5引数は1か4～7のみ")
     elif not arg[6].isdecimal():
         print("Error : 第6引数(最大結合数)が数値でない")
     else:
