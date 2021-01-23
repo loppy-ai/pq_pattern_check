@@ -1,25 +1,27 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import sys
+sys.dont_write_bytecode = True
 from chain_info import ChainInfo
 from damage_info import DamageInfo
 
 def main():
     # ユーザ指定部分
     next_color              = 5     # ネクストの色
-    board_pattern           = 1     # 盤面パターン
+    board_pattern           = 8     # 盤面パターン
     max_trace               = 10    # 最大なぞり消し数（表示するだけ）
     elimination_coefficient = 6.5   # 同時消し係数
     chain_coefficient       = 7     # 連鎖係数
     max_connection          = 3     # 消えるときの結合数
     is_process_print        = True # 連鎖過程の表示有無
     trace_pattern = [               # なぞり消しパターン
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0
+        1, 0, 0, 0, 0, 0, 0, 1,
+        0, 1, 1, 0, 0, 0, 1, 0,
+        1, 0, 0, 1, 0, 0, 1, 0,
+        1, 0, 0, 0, 1, 0, 1, 0,
+        0, 0, 0, 1, 0, 1, 1, 0,
+        0, 0, 0, 1, 0, 0, 0, 0
     ]
     '''
         0, 0, 0, 0, 0, 0, 0, 0,
@@ -36,7 +38,6 @@ def main():
     pattern = [str(i) for i in trace_pattern]
     display_settings(next_color, board_pattern, max_trace, elimination_coefficient, chain_coefficient, max_connection, trace_pattern)
     display_chain_result(puyo_next, puyo_board, max_trace, elimination_coefficient, chain_coefficient, max_connection, pattern, is_process_print)
-
 
 def display_settings(next_color, board_pattern, max_trace, elimination_coefficient, chain_coefficient, max_connection, pattern):
     print("---------------------設定情報---------------------")

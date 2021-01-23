@@ -140,6 +140,10 @@ def getTracePatternSize(max_trace):
         ret = 6300691
     elif max_trace == 10:
         ret = 26702013
+    elif max_trace == 11:
+        ret = 108735877
+    elif max_trace == 12:
+        ret = 422742049
     return ret
 
 
